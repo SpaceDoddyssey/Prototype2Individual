@@ -15,7 +15,7 @@ options = {
   seed: 50,
 };
 
-/** @type {{pos: Vector, width: number, height: number, type: string}[]} */
+/** @type {{pos: Vector, width: number, height: number, type: string, direction: number}[]} */
 let spawnedWalls;
 
 let nextWallDist = 0;
@@ -30,9 +30,9 @@ function update() {
   // Initializer function
   if (!ticks) {
     player = {
-      pos: vec(30, VIEW_Y - platformHeight), // Adjusted the starting position of the player
-      height: 10, // Initial height
-      direction: 1, // 1 for growing, -1 for shrinking
+      pos: vec(30, VIEW_Y - platformHeight), 
+      height: 10,
+      direction: 1,
     };
 
     spawnedWalls = [];
@@ -57,21 +57,30 @@ function update() {
   }
 
   // Update and draw player
-  player.pos.y = VIEW_Y - 10 - player.height;
+  player.pos.y = VIEW_Y - platformHeight - player.height;
   color("red");
   rect(player.pos.x, player.pos.y, playerWidth, player.height);
 
   // Update and draw walls
+  color("green");
   spawnedWalls.forEach((wall) => {
     wall.pos.x -= 2;
-    wall.pos.y = VIEW_Y - platformHeight - wall.height; 
-    color("black");
-    line(wall.pos.x, wall.pos.y, wall.pos.x, VIEW_Y - platformHeight - 1);
+    let wallEndY = 0;
+    if (wall.direction === 1) {
+      // Sticking up from the platform
+      wall.pos.y = VIEW_Y - platformHeight - wall.height;
+      wallEndY = VIEW_Y - platformHeight - 1;
+    } else {
+      // Sticking down from the top of the screen
+      wall.pos.y = 0;
+      wallEndY = VIEW_Y - platformHeight - wall.height;
+    }
+    line(wall.pos.x, wall.pos.y, wall.pos.x, wallEndY);
   });
 
   // Draw the platform
   color("blue");
-  rect(0, VIEW_Y - 10, VIEW_X, 10);
+  rect(0, VIEW_Y - platformHeight, VIEW_X, platformHeight);
 
   // Remove off-screen walls
   spawnedWalls = spawnedWalls.filter((wall) => wall.pos.x + wall.width > 0);
@@ -86,11 +95,14 @@ function changeGrowthDirection() {
 }
 
 function spawnWall() {
+  const isStickingUp = rnd() > 0.5;  // 50% chance of sticking up or down
+  const height = rnd(25, 150); 
   spawnedWalls.push({
-    pos: vec(VIEW_X, 180),
+    pos: vec(VIEW_X, isStickingUp ? VIEW_Y - platformHeight : 0),
     width: 5,
-    height: 10,
-    type: "ground"
+    height: height,
+    direction: isStickingUp ? 1 : -1,
+    type: "ground",
   });
 }
 
