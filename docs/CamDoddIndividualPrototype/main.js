@@ -114,6 +114,19 @@ function hittingWall(wall){
 
 function destroyWall(wall) {
   play("hit");
+
+  // Add particle explosion effect
+  let particleSpan = VIEW_Y - platformHeight - wall.pos.y;
+  for (let i = 0; i < 20; i++) {
+    particle(
+      wall.pos.x + rnd(wall.width), // Randomize particle position within the wall
+      wall.pos.y + rnd(particleSpan), // Randomize particle position within the wall
+      1, // count
+      1, // speed
+      rnd(360), // angle
+      360 // angleWidth
+    );
+  }
   spawnedWalls = spawnedWalls.filter((w) => w !== wall);
 }
 
