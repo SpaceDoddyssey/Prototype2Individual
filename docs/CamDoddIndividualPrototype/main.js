@@ -15,7 +15,7 @@ options = {
   seed: 50,
 };
 
-/** @type {{pos: Vector, width: number, height: number, type: string, direction: number}[]} */
+/** @type {{pos: Vector, width: number, direction: number}[]} */
 let spawnedWalls;
 
 let nextWallDist = 0;
@@ -65,16 +65,7 @@ function update() {
   color("green");
   spawnedWalls.forEach((wall) => {
     wall.pos.x -= 2;
-    let wallEndY = 0;
-    if (wall.direction === 1) {
-      // Sticking up from the platform
-      wall.pos.y = VIEW_Y - platformHeight - wall.height;
-      wallEndY = VIEW_Y - platformHeight - 1;
-    } else {
-      // Sticking down from the top of the screen
-      wall.pos.y = 0;
-      wallEndY = VIEW_Y - platformHeight - wall.height;
-    }
+    let wallEndY = wall.direction == 1 ? VIEW_Y - platformHeight : 0;
     line(wall.pos.x, wall.pos.y, wall.pos.x, wallEndY);
   });
 
@@ -84,26 +75,60 @@ function update() {
 
   // Remove off-screen walls
   spawnedWalls = spawnedWalls.filter((wall) => wall.pos.x + wall.width > 0);
+
+  checkCollisions();
 }
 
 //-----------------------------------
 //----------FUNCTIONS----------------
 //-----------------------------------
 
+function checkCollisions() {
+  spawnedWalls.forEach((wall) => {
+    // Check if the bounding boxes overlap
+    if (hittingWall(wall)){
+      if (wall.direction === 1 && player.height > (VIEW_Y - platformHeight - wall.pos.y)) {
+        // If the wall is sticking up and the player is higher, destroy the wall
+        destroyWall(wall);
+      } else {
+        // Otherwise, end the game
+        endGame();
+      }
+    }
+  });
+}
+
+function hittingWall(wall){
+  const wallBoundingBox = {
+    left: wall.pos.x,
+    right: wall.pos.x + wall.width,
+  };
+
+  const inRange =
+    player.pos.x < wallBoundingBox.right &&
+    player.pos.x + playerWidth > wallBoundingBox.left;
+  if(!inRange){ return false; }
+
+  return (wall.direction == 1 || wall.pos.y > player.pos.y);
+}
+
+function destroyWall(wall) {
+  play("hit");
+  spawnedWalls = spawnedWalls.filter((w) => w !== wall);
+}
+
 function changeGrowthDirection() {
   player.direction *= -1; // Toggle between growing and shrinking
 }
 
 function spawnWall() {
-  const isStickingUp = rnd() > 0.5;  // 50% chance of sticking up or down
-  const height = rnd(25, 150); 
+  const pos = vec(VIEW_X, rnd(100, 150));
   spawnedWalls.push({
-    pos: vec(VIEW_X, isStickingUp ? VIEW_Y - platformHeight : 0),
+    pos: pos,
     width: 5,
-    height: height,
-    direction: isStickingUp ? 1 : -1,
-    type: "ground",
+    direction: rnd() > 0.5 ? 1 : -1, // 50% chance of sticking up or down
   });
+  console.log(pos)
 }
 
 function endGame() {
