@@ -74,7 +74,11 @@ function update() {
   rect(0, VIEW_Y - platformHeight, VIEW_X, platformHeight);
 
   // Remove off-screen walls
-  spawnedWalls = spawnedWalls.filter((wall) => wall.pos.x + wall.width > 0);
+  spawnedWalls.forEach((wall) => {
+    if(wall.pos.x < -wall.width){
+      destroyWall(wall);
+    }
+  });
 
   checkCollisions();
 }
@@ -115,12 +119,14 @@ function hittingWall(wall){
 function destroyWall(wall) {
   play("hit");
 
-  // Add particle explosion effect
-  let particleSpan = VIEW_Y - platformHeight - wall.pos.y;
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 30; i++) {
+    let particleY = 
+    wall.direction == 1
+      ? rnd(VIEW_Y - platformHeight - wall.pos.y)
+      : -rnd(0, wall.pos.y);
     particle(
-      wall.pos.x + rnd(wall.width), // Randomize particle position within the wall
-      wall.pos.y + rnd(particleSpan), // Randomize particle position within the wall
+      wall.pos.x + rnd(wall.width), 
+      wall.pos.y + particleY,
       1, // count
       1, // speed
       rnd(360), // angle
@@ -128,6 +134,8 @@ function destroyWall(wall) {
     );
   }
   spawnedWalls = spawnedWalls.filter((w) => w !== wall);
+
+  addScore(1, player.pos);
 }
 
 function changeGrowthDirection() {
